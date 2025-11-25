@@ -35,25 +35,9 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return
-
-      const { key } = event
-      if (key === 'Escape') {
+      // Only handle Escape globally to clear all letters
+      if (event.key === 'Escape' && !event.target.matches('input')) {
         setTyped([])
-        return
-      }
-      if (key === 'Backspace') {
-        event.preventDefault()
-        setTyped((prev) => prev.slice(0, -1))
-        return
-      }
-      if (key === 'Enter') {
-        event.preventDefault()
-        spawnTyped('↵')
-        return
-      }
-      if (key.length === 1) {
-        spawnTyped(key)
       }
     }
 
@@ -61,29 +45,23 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const handleInput = (e) => {
-    const value = e.target.value
-    if (value.length > 0) {
-      const lastChar = value[value.length - 1]
-      spawnTyped(lastChar)
-      e.target.value = ''
-    }
-  }
-
   const handleKeyDown = (e) => {
-    if (e.key === 'Backspace') {
+    if (e.key === 'Enter') {
       e.preventDefault()
-      setTyped((prev) => prev.slice(0, -1))
-      e.target.value = ''
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      spawnTyped('↵')
-      e.target.value = ''
+      const value = e.target.value
+      if (value.length > 0) {
+        // Spawn each character from the input
+        for (let i = 0; i < value.length; i++) {
+          spawnTyped(value[i])
+        }
+        e.target.value = ''
+      }
     } else if (e.key === 'Escape') {
       e.preventDefault()
       setTyped([])
       e.target.value = ''
     }
+    // Let Backspace work normally to edit the input field
   }
 
   return (
@@ -151,9 +129,8 @@ export default function App() {
         ref={inputRef}
         type="text"
         className="mobile-input"
-        onInput={handleInput}
         onKeyDown={handleKeyDown}
-        placeholder="Tap to type..."
+        placeholder="Type and press Enter to drop letters..."
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"

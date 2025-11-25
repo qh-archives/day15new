@@ -11,6 +11,7 @@ const TYPED_LIMIT = 80
 
 export default function App() {
   const [typed, setTyped] = useState([])
+  const inputRef = useRef(null)
 
   const spawnTyped = (char) => {
     if (!char) return
@@ -60,66 +61,105 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  return (
-    <Canvas
-      className="canvas"
-      dpr={[1.5, 2]}
-      camera={{ position: [-20, 40, 30], fov: 45, near: 1, far: 300 }}
-    >
-      <color attach="background" args={['#ffffff']} />
-      <Suspense fallback={null}>
-        <Physics gravity={[0, -60, 0]}>
-          {typed.map((glyph) => (
-            <FallingGlyph key={glyph.id} char={glyph.char} />
-          ))}
-          <CuboidCollider position={[0, -6, 0]} type="fixed" args={[100, 1, 100]} />
-          <CuboidCollider position={[0, 0, -30]} type="fixed" args={[30, 100, 1]} />
-          <CuboidCollider position={[0, 0, 10]} type="fixed" args={[30, 100, 1]} />
-          <CuboidCollider position={[-30, 0, 0]} type="fixed" args={[1, 100, 30]} />
-          <CuboidCollider position={[30, 0, 0]} type="fixed" args={[1, 100, 30]} />
-        </Physics>
+  const handleInput = (e) => {
+    const value = e.target.value
+    if (value.length > 0) {
+      const lastChar = value[value.length - 1]
+      spawnTyped(lastChar)
+      e.target.value = ''
+    }
+  }
 
-        <Environment
-          files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/dancing_hall_1k.hdr"
-          resolution={1024}
-        >
-          <group rotation={[-Math.PI / 3, 0, 0]}>
-            <Lightformer
-              intensity={4}
-              rotation-x={Math.PI / 2}
-              position={[0, 5, -9]}
-              scale={[10, 10, 1]}
-            />
-            {[2, 0, 2, 0, 2, 0, 2, 0].map((x, i) => (
-              <Lightformer
-                // eslint-disable-next-line react/no-array-index-key
-                key={i}
-                form="circle"
-                intensity={4}
-                rotation={[Math.PI / 2, 0, 0]}
-                position={[x, 4, i * 4]}
-                scale={[4, 1, 1]}
-              />
+  const handleKeyDown = (e) => {
+    if (e.key === 'Backspace') {
+      e.preventDefault()
+      setTyped((prev) => prev.slice(0, -1))
+      e.target.value = ''
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      spawnTyped('↵')
+      e.target.value = ''
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setTyped([])
+      e.target.value = ''
+    }
+  }
+
+  return (
+    <div className="app-container">
+      <Canvas
+        className="canvas"
+        dpr={[1.5, 2]}
+        camera={{ position: [-20, 40, 30], fov: 45, near: 1, far: 300 }}
+      >
+        <color attach="background" args={['#ffffff']} />
+        <Suspense fallback={null}>
+          <Physics gravity={[0, -60, 0]}>
+            {typed.map((glyph) => (
+              <FallingGlyph key={glyph.id} char={glyph.char} />
             ))}
-            <Lightformer
-              intensity={2}
-              rotation-y={Math.PI / 2}
-              position={[-5, 1, -1]}
-              scale={[50, 2, 1]}
-            />
-            <Lightformer
-              intensity={2}
-              rotation-y={-Math.PI / 2}
-              position={[10, 1, 0]}
-              scale={[50, 2, 1]}
-            />
-          </group>
-        </Environment>
-        <ContactShadows smooth={false} scale={100} position={[0, -5.05, 0]} blur={0.5} opacity={0.75} />
-        <CameraControls makeDefault dollyToCursor minPolarAngle={0} maxPolarAngle={Math.PI / 2} />
-        <Preload all />
-      </Suspense>
-    </Canvas>
+            <CuboidCollider position={[0, -6, 0]} type="fixed" args={[100, 1, 100]} />
+            <CuboidCollider position={[0, 0, -30]} type="fixed" args={[30, 100, 1]} />
+            <CuboidCollider position={[0, 0, 10]} type="fixed" args={[30, 100, 1]} />
+            <CuboidCollider position={[-30, 0, 0]} type="fixed" args={[1, 100, 30]} />
+            <CuboidCollider position={[30, 0, 0]} type="fixed" args={[1, 100, 30]} />
+          </Physics>
+
+          <Environment
+            files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/dancing_hall_1k.hdr"
+            resolution={1024}
+          >
+            <group rotation={[-Math.PI / 3, 0, 0]}>
+              <Lightformer
+                intensity={4}
+                rotation-x={Math.PI / 2}
+                position={[0, 5, -9]}
+                scale={[10, 10, 1]}
+              />
+              {[2, 0, 2, 0, 2, 0, 2, 0].map((x, i) => (
+                <Lightformer
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={i}
+                  form="circle"
+                  intensity={4}
+                  rotation={[Math.PI / 2, 0, 0]}
+                  position={[x, 4, i * 4]}
+                  scale={[4, 1, 1]}
+                />
+              ))}
+              <Lightformer
+                intensity={2}
+                rotation-y={Math.PI / 2}
+                position={[-5, 1, -1]}
+                scale={[50, 2, 1]}
+              />
+              <Lightformer
+                intensity={2}
+                rotation-y={-Math.PI / 2}
+                position={[10, 1, 0]}
+                scale={[50, 2, 1]}
+              />
+            </group>
+          </Environment>
+          <ContactShadows smooth={false} scale={100} position={[0, -5.05, 0]} blur={0.5} opacity={0.75} />
+          <CameraControls makeDefault dollyToCursor minPolarAngle={0} maxPolarAngle={Math.PI / 2} />
+          <Preload all />
+        </Suspense>
+      </Canvas>
+      <input
+        ref={inputRef}
+        type="text"
+        className="mobile-input"
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
+        placeholder="Tap to type..."
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck="false"
+      />
+    </div>
   )
 }
 
